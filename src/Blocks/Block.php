@@ -183,7 +183,19 @@ class Block implements ArrayAccess {
 	}
 
 	public function __construct($data, $post_id, $registry, $order, $parent) {
-		$this->innerBlocks = self::create_blocks($data['innerBlocks'], $post_id, $registry, $this);
+		$innerBlocks = $data['innerBlocks'];
+
+		// handle mapping reusable blocks to innerblocks.
+		if ( $data['blockName'] === 'core/block' && ! empty( $data['attrs']['ref'] ) ) {
+			$ref              = $data['attrs']['ref'];
+			$reusablePost     = get_post( $ref );
+
+			if ( ! empty( $reusablePost ) ) {
+				$innerBlocks = parse_blocks( $reusablePost->post_content );
+			}
+		}
+
+		$this->innerBlocks = self::create_blocks( $innerBlocks, $post_id, $registry, $this );
 
 		$this->name = $data['blockName'];
 		$this->postId = $post_id;

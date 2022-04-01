@@ -37,6 +37,7 @@ class BlockEditorContentNode {
 						parse_blocks(get_post($model->ID)->post_content),
 						$model->ID,
 						Registry::get_registry(),
+						null,
 						true
 					);
 
@@ -80,6 +81,7 @@ class BlockEditorContentNode {
 									parse_blocks(get_post($id)->post_content),
 									$id,
 									Registry::get_registry(),
+									null,
 									true
 								)
 							);

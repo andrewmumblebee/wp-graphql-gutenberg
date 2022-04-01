@@ -8,7 +8,7 @@ use Opis\JsonSchema\Validator;
 use voku\helper\HtmlDomParser;
 
 class Block implements ArrayAccess {
-	public static function create_blocks($blocks, $post_id, $registry, $parent = null) {
+	public static function create_blocks($blocks, $post_id, $registry, $parent = null, $is_slim_response = false) {
 		$result = [];
 		$order = 0;
 
@@ -22,7 +22,7 @@ class Block implements ArrayAccess {
 				$block['blockName'] = 'core/freeform';
 			}
 
-			$result[] = new Block($block, $post_id, $registry, $order, $parent);
+			$result[] = new Block($block, $post_id, $registry, $order, $parent, $is_slim_response);
 			$order++;
 		}
 
@@ -75,7 +75,7 @@ class Block implements ArrayAccess {
 
 								$value = $value . $childNode->outerhtml;
 							}
-							
+
 							$result[$key] = $value;
 						} else {
 							$result[$key] = $source_node->innerhtml;
@@ -182,7 +182,7 @@ class Block implements ArrayAccess {
 		];
 	}
 
-	public function __construct($data, $post_id, $registry, $order, $parent) {
+	public function __construct($data, $post_id, $registry, $order, $parent, $is_slim_response = false) {
 		$innerBlocks = $data['innerBlocks'];
 
 		// handle mapping reusable blocks to innerblocks.
@@ -191,28 +191,37 @@ class Block implements ArrayAccess {
 			$reusablePost     = get_post( $ref );
 
 			if ( ! empty( $reusablePost ) ) {
-				$innerBlocks = parse_blocks( $reusablePost->post_content );
+				$innerBlocks = parse_blocks( $reusablePost->post_content, $is_slim_response );
 			}
 		}
 
-		$this->innerBlocks = self::create_blocks( $innerBlocks, $post_id, $registry, $this );
+		$innerBlocks = self::create_blocks( $innerBlocks, $post_id, $registry, $this, $is_slim_response );
+		if (!$is_slim_response || !empty($innerBlocks) ) {
+			$this->innerBlocks = $innerBlocks;
+		}
 
 		$this->name = $data['blockName'];
-		$this->postId = $post_id;
-		$this->blockType = $registry[$this->name];
-		$this->originalContent = self::strip_newlines($data['innerHTML']);
-		$this->saveContent = self::parse_inner_content($data);
-		$this->order = $order;
-		$this->get_parent = function () use (&$parent) {
-			return $parent;
-		};
+		$blockType = $registry[$this->name];
 
-		$result = self::parse_attributes($data, $this->blockType);
+		if (!$is_slim_response) {
+			$this->postId = $post_id;
+			$this->blockType = $blockType;
+			$this->originalContent = self::strip_newlines($data['innerHTML']);
+			$this->saveContent = self::parse_inner_content($data);
+			$this->order = $order;
+			$this->get_parent = function () use (&$parent) {
+				return $parent;
+			};
+		}
+
+		$result = self::parse_attributes($data, $blockType);
 
 		$this->attributes = $result['attributes'];
-		$this->attributesType = $result['type'];
 
-		$this->dynamicContent = $this->render_dynamic_content($data);
+		if (!$is_slim_response) {
+			$this->attributesType = $result['type'];
+			$this->dynamicContent = $this->render_dynamic_content($data);
+		}
 
 	}
 

@@ -14,7 +14,7 @@ class BlockEditorContentNode {
 	function __construct() {
 		$fields = [
 			'id' => [
-			   'type' => ['non_null' => 'ID']			   
+			   'type' => ['non_null' => 'ID']
 			],
 			'blocks' => [
 				'type' => [
@@ -36,7 +36,8 @@ class BlockEditorContentNode {
 					$blocks = Block::create_blocks(
 						parse_blocks(get_post($model->ID)->post_content),
 						$model->ID,
-						Registry::get_registry()
+						Registry::get_registry(),
+						true
 					);
 
 					return json_encode($blocks);
@@ -78,7 +79,8 @@ class BlockEditorContentNode {
 								Block::create_blocks(
 									parse_blocks(get_post($id)->post_content),
 									$id,
-									Registry::get_registry()
+									Registry::get_registry(),
+									true
 								)
 							);
 						}

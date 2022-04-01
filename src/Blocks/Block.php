@@ -216,7 +216,10 @@ class Block implements ArrayAccess {
 
 		$result = self::parse_attributes($data, $blockType);
 
-		$this->attributes = $result['attributes'];
+		if ( ! empty($result['attributes']) ) {
+			$this->attributes = $result['attributes'];
+		}
+
 
 		if (!$is_slim_response) {
 			$this->attributesType = $result['type'];
